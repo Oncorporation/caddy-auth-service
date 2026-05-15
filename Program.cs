@@ -32,7 +32,9 @@ app.MapGet("/validate", async (HttpContext context) =>
         var exists = await conn.ExecuteScalarAsync<int>(
             @"SELECT COUNT(1) 
               FROM [dbo].[APIAccess] 
-              WHERE [Key] = @Key AND isActive = 1",
+              WHERE [Key] = @Key AND isActive = 1
+                AND ([SCOPE]='Permanent' or [SCOPE]='Permanent,Read' or [SCOPE]='Permanent,Write' or [SCOPE]='Permanent,Read,Write'
+                or ([SCOPE]='Temporary' and GETDATE() < DATEADD(HOUR, 1, DateUpdated)))",
             new { Key = apiKey });
 
         return exists > 0 ? Results.Ok() : Results.Unauthorized();
