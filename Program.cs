@@ -10,6 +10,7 @@ builder.Services.AddWindowsService(options =>
     options.ServiceName = "CaddyAuthService";
 });
 
+builder.WebHost.UseUrls("http://localhost:11400");
 var app = builder.Build();
 
 app.MapGet("/validate", async (HttpContext context) =>
