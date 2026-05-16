@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.Data.SqlClient;
 using Dapper;
 using Microsoft.Extensions.Hosting.WindowsServices;
@@ -31,12 +32,9 @@ app.MapGet("/validate", async (HttpContext context) =>
         await conn.OpenAsync();
 
         var exists = await conn.ExecuteScalarAsync<int>(
-            @"SELECT COUNT(1) 
-              FROM [dbo].[APIAccess] 
-              WHERE [Key] = @Key AND isActive = 1
-                AND ([SCOPE]='Permanent' or [SCOPE]='Permanent,Read' or [SCOPE]='Permanent,Write' or [SCOPE]='Permanent,Read,Write'
-                or ([SCOPE]='Temporary' and GETDATE() < DATEADD(HOUR, 1, DateUpdated)))",
-            new { Key = apiKey });
+            "CheckApiKey",
+            new { Key = apiKey },
+            commandType: CommandType.StoredProcedure);
 
         return exists > 0 ? Results.Ok() : Results.Unauthorized();
     }

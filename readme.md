@@ -68,12 +68,12 @@ To update the service after changes, stop it, replace the files, then start it a
 
 ```caddyfile
 yourdomain.com {
-    # Forward auth to this service
     forward_auth localhost:5000 {
-        uri /validate
+        uri /validate{query}
+        copy_headers X-API-Key
     }
 
-    reverse_proxy localhost:11434   # Your backend (e.g. Ollama)
+    reverse_proxy localhost:11434
 }
 ```
 
