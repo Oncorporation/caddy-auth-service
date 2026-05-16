@@ -59,6 +59,10 @@ Set as a **system environment variable**:
 ```powershell
 setx CADDY_AUTH_CONN "Server=YOUR_SERVER;Database=EncryptionDB;Trusted_Connection=True;TrustServerCertificate=True;" /M
 ```
+or
+```powershell 
+setx CADDY_AUTH_CONN "Server=YOUR_SERVER;Database=EncryptionDB;User Id=YOUR_USER;Password=YOUR_PASS;TrustServerCertificate=True;" /M
+```
 
 Then restart the Windows service.
 
