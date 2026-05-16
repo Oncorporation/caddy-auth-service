@@ -13,7 +13,8 @@ var app = builder.Build();
 
 app.MapGet("/validate", async (HttpContext context) =>
 {
-    var apiKey = context.Request.Headers["X-API-Key"].FirstOrDefault();
+    var apiKey = context.Request.Headers["X-API-Key"].FirstOrDefault()
+        ?? context.Request.Query["key"];
 
     if (string.IsNullOrWhiteSpace(apiKey))
         return Results.Unauthorized();

@@ -10,7 +10,7 @@ Caddy forwards authentication requests to this service. If the key is valid and 
 
 ## How It Works
 
-1. Client sends a request with header `X-API-Key: your-key`
+1. Client sends a request with header `X-API-Key: your-key` (or querystring `?key=your-key`)
 2. Caddy calls this service via `forward_auth`
 3. Service checks the key against the `[Key]` column in `dbo.APIAccess` where `isActive = 1`
 4. Returns `200 OK` → Caddy allows the request
@@ -82,6 +82,11 @@ Client requests must include the header:
 X-API-Key: your-secret-key-value
 ```
 
+Or use the querystring fallback:
+```
+?key=your-secret-key-value
+```
+
 ## Security Notes
 
 - Never hardcode the connection string in source code.
@@ -93,7 +98,7 @@ X-API-Key: your-secret-key-value
 
 | Endpoint     | Method | Purpose                     |
 |--------------|--------|-----------------------------|
-| `/validate`  | GET    | Validates `X-API-Key` header |
+| `/validate`  | GET    | Validates `X-API-Key` header or `?key=` querystring |
 
 ## License
 
