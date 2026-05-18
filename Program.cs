@@ -13,6 +13,13 @@ builder.Services.AddWindowsService(options =>
 builder.WebHost.UseUrls("http://localhost:11400");
 var app = builder.Build();
 
+var connectionString = Environment.GetEnvironmentVariable("CADDY_AUTH_CONN");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    Console.Error.WriteLine("connection string not found");
+    Environment.Exit(1);
+}
+
 app.MapGet("/validate", async (HttpContext context) =>
 {
     var apiKey = context.Request.Headers["X-API-Key"].FirstOrDefault()
@@ -23,11 +30,6 @@ app.MapGet("/validate", async (HttpContext context) =>
 
     try
     {
-        var connectionString = Environment.GetEnvironmentVariable("CADDY_AUTH_CONN");
-
-        if (string.IsNullOrEmpty(connectionString))
-            throw new Exception("Connection string not found");
-
         await using var conn = new SqlConnection(connectionString);
 
         await conn.OpenAsync();
