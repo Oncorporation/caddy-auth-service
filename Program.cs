@@ -20,6 +20,8 @@ if (string.IsNullOrWhiteSpace(connectionString))
     Environment.Exit(1);
 }
 
+connectionString = connectionString.Trim().Trim('"');
+
 app.MapGet("/validate", async (HttpContext context) =>
 {
     var apiKey = context.Request.Headers["X-API-Key"].FirstOrDefault()
