@@ -1,5 +1,6 @@
 Dim conn, cs, shell
 Set shell = CreateObject("WScript.Shell")
+rem this program uses SQLOLEDB not Microsoft.Data.SqlClient;  You need the OLEDB provider installed on your machine to run this test
 rem cs = "Provider=SQLOLEDB;Server=192.168.1.51,14333;Database=EncryptionDB;User Id=USER;Password=PASSWORD;TrustServerCertificate=True;"
 cs = shell.ExpandEnvironmentStrings("%CADDY_AUTH_CONN%")
 Set conn = CreateObject("ADODB.Connection")
