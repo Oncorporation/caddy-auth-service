@@ -24,24 +24,14 @@ connectionString = connectionString.Trim().Trim('"');
 
 app.MapGet("/validate", async (HttpContext context) =>
 {
-    var apiKey = context.Request.Headers["X-API-Key"].FirstOrDefault()
-        ?? context.Request.Query["key"];
+    var apiKey = GetApiKey(context);
 
     if (string.IsNullOrWhiteSpace(apiKey))
         return Results.Unauthorized();
 
     try
     {
-        await using var conn = new SqlConnection(connectionString);
-
-        await conn.OpenAsync();
-
-        var exists = await conn.ExecuteScalarAsync<int>(
-            "CheckApiKey",
-            new { Key = apiKey },
-            commandType: CommandType.StoredProcedure);
-
-        return exists > 0 ? Results.Ok() : Results.Unauthorized();
+        return await ValidateApiKeyAsync(connectionString, apiKey) ? Results.Ok() : Results.Unauthorized();
     }
     catch
     {
@@ -49,4 +39,56 @@ app.MapGet("/validate", async (HttpContext context) =>
     }
 });
 
+app.MapGet("/validatelog", async (HttpContext context) =>
+{
+    var apiKey = GetApiKey(context);
+
+    if (string.IsNullOrWhiteSpace(apiKey))
+    {
+        await WriteLogAsync(apiKey, connectionString, null, "apiKey missing");
+        return Results.Unauthorized();
+    }
+
+    try
+    {
+        var exists = await ValidateApiKeyAsync(connectionString, apiKey);
+        await WriteLogAsync(apiKey, connectionString, exists, null);
+
+        return exists ? Results.Ok() : Results.Unauthorized();
+    }
+    catch (Exception ex)
+    {
+        await WriteLogAsync(apiKey, connectionString, null, ex.Message);
+        return Results.StatusCode(500);
+    }
+});
+
 app.Run();
+
+static string? GetApiKey(HttpContext context)
+{
+    return context.Request.Headers["X-API-Key"].FirstOrDefault()
+        ?? context.Request.Query["key"];
+}
+
+static async Task<bool> ValidateApiKeyAsync(string connectionString, string apiKey)
+{
+    await using var conn = new SqlConnection(connectionString);
+
+    await conn.OpenAsync();
+
+    var exists = await conn.ExecuteScalarAsync<int>(
+        "CheckApiKey",
+        new { Key = apiKey },
+        commandType: CommandType.StoredProcedure);
+
+    return exists > 0;
+}
+
+static async Task WriteLogAsync(string? apiKey, string connectionString, bool? exists, string? errorMessage)
+{
+    var logLine = $"{DateTimeOffset.UtcNow:O}\tapiKey={apiKey ?? string.Empty}\tconnectionString={connectionString}\texists={exists?.ToString() ?? string.Empty}\terrorMessage={errorMessage ?? string.Empty}{Environment.NewLine}";
+    var logPath = Path.Combine(AppContext.BaseDirectory, "log.txt");
+
+    await File.AppendAllTextAsync(logPath, logLine);
+}
