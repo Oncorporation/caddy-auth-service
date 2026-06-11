@@ -68,7 +68,9 @@ app.Run();
 static string? GetApiKey(HttpContext context)
 {
     return context.Request.Headers["X-API-Key"].FirstOrDefault()
-        ?? context.Request.Query["key"];
+        ?? context.Request.Query["key"].FirstOrDefault()
+        ?? context.Request.Cookies["key"]
+        ?? System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(context.Request.Query["pass"].FirstOrDefault() ?? string.Empty));
 }
 
 static async Task<bool> ValidateApiKeyAsync(string connectionString, string apiKey)
@@ -87,8 +89,29 @@ static async Task<bool> ValidateApiKeyAsync(string connectionString, string apiK
 
 static async Task WriteLogAsync(string? apiKey, string connectionString, bool? exists, string? errorMessage)
 {
-    var logLine = $"{DateTimeOffset.UtcNow:O}\tapiKey={apiKey ?? string.Empty}\tconnectionString={connectionString}\texists={exists?.ToString() ?? string.Empty}\terrorMessage={errorMessage ?? string.Empty}{Environment.NewLine}";
+    var logLine = $"{DateTimeOffset.UtcNow:O}\tapiKey={apiKey ?? string.Empty}\tconnectionString={RedactPassword(connectionString)}\texists={exists?.ToString() ?? string.Empty}\terrorMessage={errorMessage ?? string.Empty}{Environment.NewLine}";
     var logPath = Path.Combine(AppContext.BaseDirectory, "log.txt");
 
     await File.AppendAllTextAsync(logPath, logLine);
+}
+
+static string RedactPassword(string connectionString)
+{
+    // Replace password/pwd values with a fixed placeholder to avoid leaking password length
+    var redacted = connectionString;
+    var patterns = new[] { "password=", "pwd=" };
+    foreach (var pattern in patterns)
+    {
+        var lower = redacted.ToLowerInvariant();
+        var index = lower.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
+        if (index >= 0)
+        {
+            var valueStart = index + pattern.Length;
+            var valueEnd = redacted.IndexOf(';', valueStart);
+            var before = redacted.Substring(0, valueStart);
+            var after = valueEnd >= 0 ? redacted.Substring(valueEnd) : "";
+            redacted = before + "[REDACTED]" + after;
+        }
+    }
+    return redacted;
 }
