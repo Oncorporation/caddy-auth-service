@@ -67,25 +67,39 @@ app.Run();
 
 static string? GetApiKey(HttpContext context)
 {
-    var base64Pass = context.Request.Query["pass"].FirstOrDefault();
-    var decodedPass = string.Empty;
+    var pass = ParseBasicPassword(context.Request.Query["pass"].FirstOrDefault());
+    var queryKey = context.Request.Query["key"].FirstOrDefault();
 
-    if (!string.IsNullOrWhiteSpace(base64Pass))
-    {
-        try
-        {
-            decodedPass = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(base64Pass));
-        }
-        catch (FormatException)
-        {
-            decodedPass = base64Pass;
-        }
-    }
+    if (string.Equals(queryKey, "<nil>", StringComparison.OrdinalIgnoreCase))
+        queryKey = pass;
 
     return context.Request.Headers["X-API-Key"].FirstOrDefault()
-        ?? context.Request.Query["key"].FirstOrDefault()
+        ?? queryKey
         ?? context.Request.Cookies["key"]
-        ?? decodedPass;
+        ?? pass;
+}
+
+static string ParseBasicPassword(string? value)
+{
+    if (string.IsNullOrWhiteSpace(value))
+        return string.Empty;
+
+    var credential = value.Trim();
+
+    if (credential.StartsWith("Basic ", StringComparison.OrdinalIgnoreCase))
+        credential = credential[6..].Trim();
+
+    try
+    {
+        var decoded = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(credential));
+        var separatorIndex = decoded.IndexOf(':');
+
+        return separatorIndex >= 0 ? decoded[(separatorIndex + 1)..] : string.Empty;
+    }
+    catch (FormatException)
+    {
+        return string.Empty;
+    }
 }
 
 static async Task<bool> ValidateApiKeyAsync(string connectionString, string apiKey)
