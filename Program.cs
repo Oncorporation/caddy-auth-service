@@ -67,10 +67,25 @@ app.Run();
 
 static string? GetApiKey(HttpContext context)
 {
+    var base64Pass = context.Request.Query["pass"].FirstOrDefault();
+    var decodedPass = string.Empty;
+
+    if (!string.IsNullOrWhiteSpace(base64Pass))
+    {
+        try
+        {
+            decodedPass = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(base64Pass));
+        }
+        catch (FormatException)
+        {
+            decodedPass = base64Pass;
+        }
+    }
+
     return context.Request.Headers["X-API-Key"].FirstOrDefault()
         ?? context.Request.Query["key"].FirstOrDefault()
         ?? context.Request.Cookies["key"]
-        ?? System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(context.Request.Query["pass"].FirstOrDefault() ?? string.Empty));
+        ?? decodedPass;
 }
 
 static async Task<bool> ValidateApiKeyAsync(string connectionString, string apiKey)

@@ -113,6 +113,10 @@ Or use the querystring fallback: (key must be url encoded)
 ?key=your-secret-key-value
 ```
 
+Or Use a user:passport_control:
+```
+?pass=your-secret-key-value-encoded-base64
+
 ## Security Notes
 
 - Never hardcode the connection string in source code.
