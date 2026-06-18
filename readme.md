@@ -105,17 +105,17 @@ mydomain.com {
 
 Client requests must include the header:
 ```
-X-API-Key: your-secret-key-value
+X-API-Key: your-public-key-value
 ```
 
 Or use the querystring fallback: (key must be url encoded)
 ```
-?key=your-secret-key-value
+?key=your-public-key-value
 ```
 
 Or Use a user:passport_control:
 ```
-?pass=your-secret-key-value-encoded-base64
+?pass=your-public-key-value-encoded-base64
 
 ## Security Notes
 
