@@ -72,8 +72,15 @@ static string? GetApiKey(HttpContext context)
 
     if (string.Equals(queryKey, "<nil>", StringComparison.OrdinalIgnoreCase))
         queryKey = pass;
+    
+    var xApiKeyHeader = context.Request.Headers["X-API-Key"].FirstOrDefault();
+    xApiKeyHeader = xApiKeyHeader?.Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase).Trim();
 
-    return context.Request.Headers["X-API-Key"].FirstOrDefault()
+    var authorizationHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+    authorizationHeader = authorizationHeader?.Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase).Trim();
+
+    return xApiKeyHeader
+        ?? authorizationHeader
         ?? queryKey
         ?? context.Request.Cookies["key"]
         ?? pass;
